@@ -23,7 +23,7 @@ const createTables = () => {
             if (err) {
                 console.error(`❌ Error creating ${table.name} table:`, err);
             } else {
-                console.log(`✅ Table ${table.name} created or already exists.`);
+                
                 if (table.name === 'users') {
                     seedUsers(); // Call seed function after creating users table
                 }
@@ -33,30 +33,38 @@ const createTables = () => {
 };
 
 // Function to seed users data
+const users = [
+    { name: 'Admin', email: 'admin@email.com', password: 'password123', role: 'admin' },
+    { name: 'Cherysa', email: 'cherysa@email.com', password: 'password123', role: 'cherysa' },
+    { name: 'Diyatmika', email: 'nusatin@email.com', password: 'password123', role: 'diyatmika' },
+    { name: 'Driver', email: 'driver@email.com', password: 'password123', role: 'driver' }
+];
+
 const seedUsers = async () => {
-    const users = [
-        { name: 'Admin', email: 'admin@email.com', password: 'admin1234', role: 'admin' },
-        { name: 'Cherysa', email: 'cherysa@email.com', password: 'cherysa1234', role: 'cherysa' },
-        { name: 'Diyatmika', email: 'nusatin@email.com', password: 'diyatmika1234', role: 'diyatmika' },
-        { name: 'Driver', email: 'driver@email.com', password: 'driver1234', role: 'driver' }
-    ];
-
     for (const user of users) {
-        const hashedPassword = await bcrypt.hash(user.password, 12);
-
-        db.query(
-            `INSERT INTO users (name, email, password, role) 
-             VALUES (?, ?, ?, ?) 
-             ON DUPLICATE KEY UPDATE name = VALUES(name), password = VALUES(password), role = VALUES(role)`,
-            [user.name, user.email, hashedPassword, user.role],
-            (err) => {
-                if (err) {
-                    console.error(`❌ Error seeding user ${user.email}:`, err);
-                } else {
-                    console.log(`✅ User ${user.email} seeded successfully.`);
-                }
+        db.query(`SELECT COUNT(*) AS count FROM users WHERE email = ?`, [user.email], async (err, result) => {
+            if (err) {
+                console.error(`❌ Error checking user ${user.email}:`, err);
+                return;
             }
-        );
+
+            if (result[0].count > 0) {
+                
+            } else {
+                const hashedPassword = await bcrypt.hash(user.password, 12);
+                db.query(
+                    `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`,
+                    [user.name, user.email, hashedPassword, user.role],
+                    (insertErr) => {
+                        if (insertErr) {
+                            console.error(`❌ Error inserting user ${user.email}:`, insertErr);
+                        } else {
+                            console.log(`✅ User ${user.email} inserted successfully.`);
+                        }
+                    }
+                );
+            }
+        });
     }
 };
 
